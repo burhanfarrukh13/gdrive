@@ -1,0 +1,75 @@
+﻿pyinstaller : 274 INFO: PyInstaller: 6.21.0, contrib hooks: 2026.6
+At line:1 char:196
++ ... ude\gdrive; pyinstaller --noconfirm --clean DriveManager.spec 2>&1 |  ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (274 INFO: PyIns...b hooks: 2026.6:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+275 INFO: Python: 3.13.13
+332 INFO: Platform: Windows-11-10.0.26200-SP0
+332 INFO: Python environment: C:\Users\user\AppData\Local\Programs\Python\Python313
+336 INFO: Removing temporary files and cleaning cache in C:\Users\user\AppData\Local\pyinstaller
+352 INFO: Module search paths (PYTHONPATH):
+['C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\Scripts\\pyinstaller.exe',
+ 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\python313.zip',
+ 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\DLLs',
+ 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\Lib',
+ 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313',
+ 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages',
+ 'D:\\claude\\gdrive']
+1557 INFO: checking Analysis
+1558 INFO: Building Analysis because Analysis-00.toc is non existent
+1558 INFO: Looking for Python shared library...
+1558 INFO: Using Python shared library: C:\Users\user\AppData\Local\Programs\Python\Python313\python313.dll
+1558 INFO: Running Analysis Analysis-00.toc
+1558 INFO: Target bytecode optimization level: 0
+1558 INFO: Initializing module dependency graph...
+1560 INFO: Initializing module graph hook caches...
+1593 INFO: Analyzing modules for base_library.zip ...
+4577 INFO: Processing standard module hook 'hook-encodings.py' from 
+'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\PyInstaller\\hooks'
+7891 INFO: Processing standard module hook 'hook-math.py' from 
+'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\PyInstaller\\hooks'
+8670 INFO: Processing standard module hook 'hook-heapq.py' from 
+'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\PyInstaller\\hooks'
+11641 INFO: Processing standard module hook 'hook-pickle.py' from 
+'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\PyInstaller\\hooks'
+14972 INFO: Caching module dependency graph...
+15067 INFO: Analyzing D:\claude\gdrive\launcher.py
+16041 INFO: Processing standard module hook 'hook-sysconfig.py' from 
+'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\PyInstaller\\hooks'
+16054 INFO: Processing standard module hook 'hook-_ctypes.py' from 
+'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\PyInstaller\\hooks'
+16064 INFO: Processing module hooks (post-graph stage)...
+16075 INFO: Performing binary vs. data reclassification (1 entries)
+16077 INFO: Looking for ctypes DLLs
+16100 INFO: Analyzing run-time hooks ...
+16101 INFO: Including run-time hook 'pyi_rth_inspect.py' from 
+'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+16115 INFO: Creating base_library.zip...
+16194 INFO: Looking for dynamic libraries
+16491 INFO: Extra DLL search directories (AddDllDirectory): []
+16491 INFO: Extra DLL search directories (PATH): []
+16945 INFO: Warnings written to D:\claude\gdrive\build\DriveManager\warn-DriveManager.txt
+16982 INFO: Graph cross-reference written to D:\claude\gdrive\build\DriveManager\xref-DriveManager.html
+17027 INFO: checking PYZ
+17027 INFO: Building PYZ because PYZ-00.toc is non existent
+17028 INFO: Building PYZ (ZlibArchive) D:\claude\gdrive\build\DriveManager\PYZ-00.pyz
+17405 INFO: Building PYZ (ZlibArchive) D:\claude\gdrive\build\DriveManager\PYZ-00.pyz completed successfully.
+17417 INFO: checking PKG
+17418 INFO: Building PKG because PKG-00.toc is non existent
+17419 INFO: Building PKG (CArchive) DriveManager.pkg
+21194 INFO: Building PKG (CArchive) DriveManager.pkg completed successfully.
+21198 INFO: Bootloader C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\PyInstaller\bootloader\W
+indows-64bit-intel\run.exe
+21198 INFO: checking EXE
+21199 INFO: Building EXE because EXE-00.toc is non existent
+21199 INFO: Building EXE from EXE-00.toc
+21201 INFO: Copying bootloader EXE to D:\claude\gdrive\dist\DriveManager.exe
+21298 INFO: Copying icon to EXE
+21391 INFO: Copying 0 resources to EXE
+21391 INFO: Embedding manifest in EXE
+21479 INFO: Appending PKG archive to EXE
+21793 INFO: Fixing EXE headers
+22435 INFO: Building EXE from EXE-00.toc completed successfully.
+22439 INFO: Build complete! The results are available in: D:\claude\gdrive\dist

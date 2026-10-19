@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Payouts — Drive Manager{% endblock %}
+{% block heading %}Payouts{% endblock %}
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+  <div class="rounded-2xl border border-ink-700/60 bg-ink-900 p-5">
+    <div class="text-xs uppercase tracking-wider text-slate-400">Pending</div>
+    <div class="text-3xl font-semibold mt-1">{{ total_pending }}</div>
+  </div>
+  <div class="rounded-2xl border border-ink-700/60 bg-ink-900 p-5">
+    <div class="text-xs uppercase tracking-wider text-slate-400">Paid Out</div>
+    <div class="text-3xl font-semibold mt-1">{{ total_paid }}</div>
+  </div>
+  <div class="rounded-2xl border border-ink-700/60 bg-ink-900 p-5">
+    <div class="text-xs uppercase tracking-wider text-slate-400">Members w/ balance</div>
+    <div class="text-3xl font-semibold mt-1">{{ balances|length }}</div>
+  </div>
+</div>
+
+{% if balances and can(user.role, 'payouts.create') %}
+<div class="rounded-2xl border border-ink-700/60 bg-ink-900 p-5 mb-4">
+  <h3 class="font-semibold mb-3">Build payouts from current balances</h3>
+  <form method="post" action="/payouts/build" class="flex flex-wrap gap-2 items-end">
+    {% for m, b in balances %}
+    <label class="flex items-center gap-2 px-3 py-2 rounded-lg bg-ink-800 border border-ink-700 text-sm">
+      <input type="checkbox" name="user_ids" value="{{ m.id }}" checked>
+      <span>{{ m.full_name }} <span class="text-slate-400">({{ b }})</span></span>
+    </label>
+    {% endfor %}
+    <input name="period_label" placeholder="Period (e.g. 2026-07)" class="px-3 py-2 rounded-lg bg-ink-800 border border-ink-700 text-sm">
+    <button class="px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-400 text-white text-sm font-medium">Build payouts</button>
+  </form>
+</div>
+{% endif %}
+
+<form method="get" class="mb-3">
+  <select name="status_filter" class="px-3 py-2 rounded-lg bg-ink-800 border border-ink-700">
+    {% for opt, lbl in [('all','All'),('pending','Pending'),('paid','Paid')] %}
+    <option value="{{ opt }}" {% if status_filter == opt %}selected{% endif %}>{{ lbl }}</option>
+    {% endfor %}
+  </select>
+  <button class="px-4 py-2 rounded-lg bg-ink-800">Filter</button>
+</form>
+
+<div class="rounded-2xl border border-ink-700/60 bg-ink-900 overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-ink-800 text-slate-400 text-xs uppercase">
+      <tr>
+        <th class="text-left px-4 py-3">Member</th>
+        <th class="text-left px-4 py-3">Amount</th>
+        <th class="text-left px-4 py-3">Period</th>
+        <th class="text-left px-4 py-3">Status</th>
+        <th class="text-left px-4 py-3">Paid on</th>
+        <th class="text-left px-4 py-3">Method / Ref</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-ink-700/40">
+      {% for p in payouts %}
+      <tr>
+        <td class="px-4 py-3">{{ p.user.full_name }}</td>
+        <td class="px-4 py-3 font-medium">{{ p.amount|round(2) }}</td>
+        <td class="px-4 py-3 text-slate-400">{{ p.period_label or '—' }}</td>
+        <td class="px-4 py-3">
+          {% if p.status.value == 'paid' %}<span class="text-emerald-300">Paid</span>
+          {% else %}<span class="text-amber-300">Pending</span>{% endif %}
+        </td>
+        <td class="px-4 py-3 text-slate-400">{{ p.paid_on or '—' }}</td>
+        <td class="px-4 py-3 text-slate-400">{{ p.method or '' }} {{ p.reference or '' }}</td>
+        <td class="px-4 py-3 text-right">
+          {% if p.status.value == 'pending' and can(user.role, 'payouts.update') %}
+          <form method="post" action="/payouts/{{ p.id }}/pay" class="inline-flex gap-1">
+            <input name="method" placeholder="Method" class="px-2 py-1 rounded bg-ink-800 border border-ink-700 text-xs w-24">
+            <input name="reference" placeholder="Ref" class="px-2 py-1 rounded bg-ink-800 border border-ink-700 text-xs w-24">
+            <button class="text-emerald-400 hover:underline text-xs">Mark paid</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" class="text-slate-500 text-center py-10">No payouts yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

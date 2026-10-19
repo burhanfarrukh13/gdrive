@@ -1,0 +1,11 @@
+﻿python : INFO:     Started server process [24784]
+At line:1 char:38
++ cd D:\claude\gdrive\gdrive-platform; python run.py 2>&1 | Out-File -F ...
++                                      ~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (INFO:     Started server process [24784]:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:52872 - "GET /health HTTP/1.1" 200 OK

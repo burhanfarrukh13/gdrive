@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Students — Drive Manager{% endblock %}
+{% block heading %}Students{% endblock %}
+{% block heading_extra %}
+  {% if can(user.role, 'students.create') %}
+  <a href="/students/new" class="px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-400 text-white text-sm">+ New student</a>
+  {% endif %}
+{% endblock %}
+{% block content %}
+<form method="get" class="mb-4">
+  <input name="q" value="{{ q }}" placeholder="Search by name, email, batch…"
+         class="w-full md:w-96 px-3 py-2 rounded-lg bg-ink-800 border border-ink-700 focus:border-brand-500 focus:outline-none">
+</form>
+<div class="rounded-2xl border border-ink-700/60 bg-ink-900 overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-ink-800 text-slate-400 text-xs uppercase tracking-wider">
+      <tr>
+        <th class="text-left px-4 py-3">Name</th>
+        <th class="text-left px-4 py-3">Email</th>
+        <th class="text-left px-4 py-3">Google account</th>
+        <th class="text-left px-4 py-3">Batch</th>
+        <th class="text-left px-4 py-3">Status</th>
+        <th class="px-4 py-3"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-ink-700/40">
+      {% for s in students %}
+      <tr class="hover:bg-ink-800/40">
+        <td class="px-4 py-3 font-medium">{{ s.full_name }}</td>
+        <td class="px-4 py-3 text-slate-400">{{ s.email }}</td>
+        <td class="px-4 py-3 text-slate-400">{{ s.google_email }}</td>
+        <td class="px-4 py-3 text-slate-400">{{ s.course_or_batch or '—' }}</td>
+        <td class="px-4 py-3">
+          {% if s.is_active %}
+            <span class="px-2 py-0.5 rounded-full text-xs bg-emerald-500/15 text-emerald-300">Active</span>
+          {% else %}
+            <span class="px-2 py-0.5 rounded-full text-xs bg-slate-500/15 text-slate-400">Inactive</span>
+          {% endif %}
+        </td>
+        <td class="px-4 py-3 text-right">
+          <a href="/students/{{ s.id }}" class="text-brand-400 hover:underline">View</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="text-center text-slate-500 py-10">No students yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

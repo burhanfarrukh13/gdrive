@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Team — Drive Manager{% endblock %}
+{% block heading %}Team{% endblock %}
+{% block content %}
+{% if can(user.role, 'team.create') %}
+<div class="rounded-2xl border border-ink-700/60 bg-ink-900 p-5 mb-6">
+  <h3 class="font-semibold mb-3">Add member</h3>
+  <form method="post" action="/team/new" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+    <input name="full_name" required placeholder="Full name" class="px-3 py-2 rounded-lg bg-ink-800 border border-ink-700">
+    <input name="email" type="email" required placeholder="Email" class="px-3 py-2 rounded-lg bg-ink-800 border border-ink-700">
+    <input name="password" type="password" required placeholder="Password" class="px-3 py-2 rounded-lg bg-ink-800 border border-ink-700">
+    <select name="role" required class="px-3 py-2 rounded-lg bg-ink-800 border border-ink-700">
+      {% for r in UserRole %}
+      <option value="{{ r.value }}">{{ r.value }}</option>
+      {% endfor %}
+    </select>
+    <input name="default_ratio" type="number" step="0.01" min="0" max="1" value="0" placeholder="Share ratio (0–1)" class="px-3 py-2 rounded-lg bg-ink-800 border border-ink-700">
+    <input name="phone" placeholder="Phone" class="px-3 py-2 rounded-lg bg-ink-800 border border-ink-700">
+    <button class="px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-400 text-white font-medium md:col-span-3">Add member</button>
+  </form>
+  <p class="text-xs text-slate-500 mt-2">Total active ratio: <b class="text-brand-300">{{ total_ratio }}</b> (should sum to 1.0)</p>
+</div>
+{% endif %}
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+  {% for m in members %}
+  <div class="rounded-2xl border border-ink-700/60 bg-ink-900 p-5">
+    <form method="post" action="/team/{{ m.id }}/update" class="space-y-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-brand-500 to-fuchsia-500 grid place-items-center font-bold">
+            {{ m.full_name[0]|upper }}
+          </div>
+          <div>
+            <div class="font-medium">{{ m.full_name }}</div>
+            <div class="text-xs text-slate-500">{{ m.email }}</div>
+          </div>
+        </div>
+        {% if not m.is_active %}<span class="text-xs text-slate-500">Inactive</span>{% endif %}
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="text-xs text-slate-400">Full name</label>
+          <input name="full_name" value="{{ m.full_name }}" required class="w-full mt-1 px-2 py-1.5 rounded-lg bg-ink-800 border border-ink-700 text-sm">
+        </div>
+        <div>
+          <label class="text-xs text-slate-400">Role</label>
+          <select name="role" class="w-full mt-1 px-2 py-1.5 rounded-lg bg-ink-800 border border-ink-700 text-sm">
+            {% for r in UserRole %}
+            <option value="{{ r.value }}" {% if m.role == r %}selected{% endif %}>{{ r.value }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="text-xs text-slate-400">Share ratio (0–1)</label>
+          <input name="default_ratio" type="number" step="0.01" min="0" max="1" value="{{ m.default_ratio }}"
+                 class="w-full mt-1 px-2 py-1.5 rounded-lg bg-ink-800 border border-ink-700 text-sm">
+        </div>
+        <div>
+          <label class="text-xs text-slate-400">Phone</label>
+          <input name="phone" value="{{ m.phone or '' }}" class="w-full mt-1 px-2 py-1.5 rounded-lg bg-ink-800 border border-ink-700 text-sm">
+        </div>
+        <div class="col-span-2">
+          <label class="text-xs text-slate-400">Reset password (optional)</label>
+          <input name="password" type="password" placeholder="Leave blank to keep current" class="w-full mt-1 px-2 py-1.5 rounded-lg bg-ink-800 border border-ink-700 text-sm">
+        </div>
+      </div>
+      <div class="flex items-center justify-between pt-2">
+        <label class="flex items-center gap-2 text-xs text-slate-400">
+          <input type="checkbox" name="is_active" value="1" {% if m.is_active %}checked{% endif %} class="rounded"> Active
+        </label>
+        <div class="flex gap-2">
+          {% if can(user.role, 'team.delete') and m.id != user.id %}
+          <button formaction="/team/{{ m.id }}/delete" class="text-rose-400 hover:underline text-xs"
+                  onclick="return confirm('Delete {{ m.full_name }}?')">Delete</button>
+          {% endif %}
+          {% if can(user.role, 'team.update') %}
+          <button class="px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-400 text-white text-sm">Save</button>
+          {% endif %}
+        </div>
+      </div>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

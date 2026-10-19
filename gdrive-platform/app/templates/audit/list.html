@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Audit Log — Drive Manager{% endblock %}
+{% block heading %}Audit Log{% endblock %}
+{% block content %}
+<div class="rounded-2xl border border-ink-700/60 bg-ink-900 overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-ink-800 text-slate-400 text-xs uppercase">
+      <tr>
+        <th class="text-left px-4 py-3">When</th>
+        <th class="text-left px-4 py-3">Actor</th>
+        <th class="text-left px-4 py-3">Action</th>
+        <th class="text-left px-4 py-3">Target</th>
+        <th class="text-left px-4 py-3">Detail</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-ink-700/40">
+      {% for r in rows %}
+      <tr>
+        <td class="px-4 py-3 text-slate-400">{{ r.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+        <td class="px-4 py-3">{{ r.actor_user_id or 'system' }}</td>
+        <td class="px-4 py-3"><span class="px-2 py-0.5 rounded bg-ink-800 text-brand-300 text-xs">{{ r.action }}</span></td>
+        <td class="px-4 py-3 text-slate-400">{{ r.target_type }}{% if r.target_id %} #{{ r.target_id }}{% endif %}</td>
+        <td class="px-4 py-3 text-slate-400">{{ r.detail or '' }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="text-slate-500 text-center py-10">No activity yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

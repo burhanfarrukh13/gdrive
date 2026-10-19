@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% block title %}Sales & Revenue — Drive Manager{% endblock %}
+{% block heading %}Sales &amp; Revenue
+  <span class="text-xs text-slate-500 font-normal ml-2">Each sale = revenue when paid</span>
+{% endblock %}
+{% block heading_extra %}
+  <span class="text-xs text-slate-500">
+    {% if is_seller_scope %}Your sales only{% else %}All sales{% endif %}
+  </span>
+{% endblock %}
+{% block content %}
+
+{# Summary tiles #}
+<div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+  {% macro tile(label, amount, sub, color) %}
+  <div class="rounded-2xl border border-ink-700/60 bg-ink-900 p-4">
+    <div class="text-xs uppercase tracking-wider text-slate-400">{{ label }}</div>
+    <div class="text-2xl font-semibold mt-1 {{ color }}">{{ amount }}</div>
+    {% if sub %}<div class="text-xs text-slate-500 mt-1">{{ sub }}</div>{% endif %}
+  </div>
+  {% endmacro %}
+  {{ tile('Total', totals.all, 'Across all statuses', 'text-slate-100') }}
+  {{ tile('Pending', totals.pending, 'Awaiting payment', 'text-amber-300') }}
+  {{ tile('Paid', totals.paid, 'Received & recorded', 'text-emerald-300') }}
+  {{ tile('Waived', totals.waived, 'Free comp / no charge', 'text-slate-400') }}
+</div>
+
+{# Filter bar #}
+<form method="get" class="mb-4 flex flex-wrap gap-2 items-end">
+  <div>
+    <label class="text-xs text-slate-400">Status</label>
+    <select name="status_filter" class="px-3 py-2 rounded-lg bg-ink-800 border border-ink-700">
+      <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All</option>
+      <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+      <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>Paid</option>
+      <option value="waived" {% if status_filter == 'waived' %}selected{% endif %}>Waived</option>
+    </select>
+  </div>
+  <div>
+    <label class="text-xs text-slate-400">Student</label>
+    <select name="student_id" class="px-3 py-2 rounded-lg bg-ink-800 border border-ink-700">
+      <option value="">All</option>
+      {% for s in students %}
+      <option value="{{ s.id }}" {% if student_id == s.id %}selected{% endif %}>{{ s.full_name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <button class="px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-400 text-white">Filter</button>
+</form>
+
+{# Fees table #}
+<div class="rounded-2xl border border-ink-700/60 bg-ink-900 overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-ink-800 text-slate-400 text-xs uppercase tracking-wider">
+      <tr>
+        <th class="text-left px-4 py-3">Student</th>
+        <th class="text-left px-4 py-3">Folder</th>
+        <th class="text-left px-4 py-3">Price</th>
+        <th class="text-left px-4 py-3">Status</th>
+        <th class="text-left px-4 py-3">Paid on</th>
+        <th class="text-left px-4 py-3">Credited to</th>
+        <th class="text-left px-4 py-3">Sold by</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-ink-700/40">
+      {% for g in grants %}
+      <tr class="hover:bg-ink-800/40 {% if not g.price_amount or g.price_amount == 0 %}bg-rose-500/5{% endif %}">
+        <td class="px-4 py-3 font-medium">
+          <a href="/students/{{ g.student.id }}" class="hover:underline">{{ g.student.full_name }}</a>
+        </td>
+        <td class="px-4 py-3 text-slate-400">{{ g.folder.label }}</td>
+        <td class="px-4 py-3 font-mono">
+          {% if g.price_amount and g.price_amount > 0 %}{{ g.price_amount|round(2) }} {{ g.price_currency }}
+          {% else %}
+            <span class="px-2 py-0.5 rounded-full text-xs bg-rose-500/15 text-rose-300">no price set</span>
+          {% endif %}
+        </td>
+        <td class="px-4 py-3">
+          {% if g.fee_status and g.fee_status.value == 'paid' %}<span class="px-2 py-0.5 rounded-full text-xs bg-emerald-500/15 text-emerald-300">Paid</span>
+          {% elif g.fee_status and g.fee_status.value == 'waived' %}<span class="px-2 py-0.5 rounded-full text-xs bg-slate-500/15 text-slate-300">Waived</span>
+          {% elif g.fee_status %}<span class="px-2 py-0.5 rounded-full text-xs bg-amber-500/15 text-amber-300">Pending</span>
+          {% else %}<span class="text-slate-500">—</span>{% endif %}
+        </td>
+        <td class="px-4 py-3 text-slate-400">{{ g.fee_paid_on or '—' }}</td>
+        <td class="px-4 py-3 text-slate-400">{{ g.fee_credit_account or '—' }}</td>
+        <td class="px-4 py-3 text-slate-400">{{ g.granted_by.full_name if g.granted_by else '—' }}</td>
+        <td class="px-4 py-3 text-right">
+          {% if can(user.role, 'fees.update') %}
+            <button onclick='openEditModal({{ g.id|tojson }}, {{ (g.price_amount or 0)|tojson }}, {{ (g.price_currency or "PKR")|tojson }}, {{ (g.fee_credit_account or "")|tojson }})'
+                    class="text-brand-400 hover:underline text-xs">Set price</button>
+            {% if g.fee_status and g.fee_status.value != 'paid' %}
+            <button onclick='openPayModal({{ g.id|tojson }}, {{ g.student.full_name|tojson }}, {{ g.folder.label|tojson }}, {{ (g.price_amount or 0)|tojson }}, {{ (g.price_currency or "PKR")|tojson }})'
+                    class="text-emerald-400 hover:underline text-xs ml-2">Mark paid</button>
+            {% endif %}
+            {% if g.fee_status and g.fee_status.value == 'pending' %}
+            <button onclick='openWaiveModal({{ g.id|tojson }}, {{ g.student.full_name|tojson }}, {{ g.folder.label|tojson }})'
+                    class="text-slate-400 hover:underline text-xs ml-2">Waive</button>
+            {% endif %}
+          {% else %}
+            <span class="text-xs text-slate-600">—</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="8" class="text-center text-slate-500 py-10">No fees match.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{# --- Modals: pay / waive / edit --- #}
+{% if can(user.role, 'fees.update') %}
+<div id="payModal" class="hidden fixed inset-0 z-50 grid place-items-center bg-black/60">
+  <div class="w-full max-w-md rounded-2xl bg-ink-900 border border-ink-700 p-6 relative">
+    <button onclick="closePayModal()" class="absolute top-3 right-3 text-slate-400 hover:text-white">✕</button>
+    <h3 class="text-lg font-semibold mb-1">Mark fee paid</h3>
+    <p id="payModalSub" class="text-sm text-slate-400 mb-4"></p>
+    <form method="post" id="payForm" class="space-y-3">
+      <div>
+        <label class="text-xs text-slate-400">Paid on</label>
+        <input type="date" name="paid_on" required
+               class="w-full mt-1 px-3 py-2 rounded-lg bg-ink-800 border border-ink-700">
+      </div>
+      <div>
+        <label class="text-xs text-slate-400">Credited to (account / wallet name)</label>
+        <input name="credit_account" required placeholder="e.g. Meezan — Qureshi, JazzCash 0300…"
+               class="w-full mt-1 px-3 py-2 rounded-lg bg-ink-800 border border-ink-700">
+        <p class="text-xs text-slate-500 mt-1">Just the name — we don't store account numbers.</p>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="closePayModal()" class="px-4 py-2 rounded-lg bg-ink-800 text-slate-300">Cancel</button>
+        <button class="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white font-medium">Confirm payment</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="waiveModal" class="hidden fixed inset-0 z-50 grid place-items-center bg-black/60">
+  <div class="w-full max-w-md rounded-2xl bg-ink-900 border border-ink-700 p-6 relative">
+    <button onclick="closeWaiveModal()" class="absolute top-3 right-3 text-slate-400 hover:text-white">✕</button>
+    <h3 class="text-lg font-semibold mb-1">Waive fee</h3>
+    <p id="waiveModalSub" class="text-sm text-slate-400 mb-4"></p>
+    <form method="post" id="waiveForm" class="space-y-3">
+      <div>
+        <label class="text-xs text-slate-400">Reason (optional, saved to notes)</label>
+        <input name="reason" placeholder="e.g. Free comp for review, sister of paying student…"
+               class="w-full mt-1 px-3 py-2 rounded-lg bg-ink-800 border border-ink-700">
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="closeWaiveModal()" class="px-4 py-2 rounded-lg bg-ink-800 text-slate-300">Cancel</button>
+        <button class="px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-500 text-white font-medium">Waive</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="editModal" class="hidden fixed inset-0 z-50 grid place-items-center bg-black/60">
+  <div class="w-full max-w-md rounded-2xl bg-ink-900 border border-ink-700 p-6 relative">
+    <button onclick="closeEditModal()" class="absolute top-3 right-3 text-slate-400 hover:text-white">✕</button>
+    <h3 class="text-lg font-semibold mb-1">Edit fee</h3>
+    <p class="text-sm text-slate-400 mb-4">Correct the price or credited-to label.</p>
+    <form method="post" id="editForm" class="space-y-3">
+      <div class="grid grid-cols-3 gap-3">
+        <div class="col-span-2">
+          <label class="text-xs text-slate-400">Price</label>
+          <input type="number" min="0" step="0.01" name="price_amount" required
+                 class="w-full mt-1 px-3 py-2 rounded-lg bg-ink-800 border border-ink-700">
+        </div>
+        <div>
+          <label class="text-xs text-slate-400">Currency</label>
+          <input name="price_currency" maxlength="8" class="w-full mt-1 px-3 py-2 rounded-lg bg-ink-800 border border-ink-700">
+        </div>
+      </div>
+      <div>
+        <label class="text-xs text-slate-400">Credited to (account / wallet name)</label>
+        <input name="fee_credit_account" class="w-full mt-1 px-3 py-2 rounded-lg bg-ink-800 border border-ink-700">
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="closeEditModal()" class="px-4 py-2 rounded-lg bg-ink-800 text-slate-300">Cancel</button>
+        <button class="px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-400 text-white font-medium">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openPayModal(id, student, folder, amount, currency) {
+  document.getElementById('payForm').action = '/fees/' + id + '/mark-paid';
+  document.getElementById('payModalSub').textContent = student + ' → ' + folder + ' — ' + amount + ' ' + currency;
+  // Default the paid-on date to today
+  const today = new Date().toISOString().slice(0, 10);
+  document.querySelector('#payForm input[name="paid_on"]').value = today;
+  document.getElementById('payModal').classList.remove('hidden');
+}
+function closePayModal() { document.getElementById('payModal').classList.add('hidden'); }
+function openWaiveModal(id, student, folder) {
+  document.getElementById('waiveForm').action = '/fees/' + id + '/waive';
+  document.getElementById('waiveModalSub').textContent = student + ' → ' + folder;
+  document.getElementById('waiveModal').classList.remove('hidden');
+}
+function closeWaiveModal() { document.getElementById('waiveModal').classList.add('hidden'); }
+function openEditModal(id, price, currency, credit) {
+  document.getElementById('editForm').action = '/fees/' + id + '/edit';
+  document.querySelector('#editForm input[name="price_amount"]').value = price;
+  document.querySelector('#editForm input[name="price_currency"]').value = currency;
+  document.querySelector('#editForm input[name="fee_credit_account"]').value = credit || '';
+  document.getElementById('editModal').classList.remove('hidden');
+}
+function closeEditModal() { document.getElementById('editModal').classList.add('hidden'); }
+</script>
+{% endif %}
+
+{% endblock %}

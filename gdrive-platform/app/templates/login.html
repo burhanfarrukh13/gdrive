@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign in — Drive Manager</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/app.css">
+<script>
+tailwind.config = { theme: { extend: {
+  colors: {
+    ink:   { 950:'#070b14', 900:'#0b1220', 800:'#111a2e', 700:'#1a2540' },
+    pass:  { 50:'#F7F4EC' },
+    brass: { 500:'#B08D57' },
+    live:  { 500:'#22C55E' },
+  },
+  fontFamily: { serif: ['Fraunces','serif'], sans: ['Inter','system-ui','sans-serif'] },
+}}}
+</script>
+<style>
+  .perforation {
+    background-image: radial-gradient(circle, rgba(7,11,20,.22) 2px, transparent 2px);
+    background-size: 14px 100%;
+    background-position: 7px center;
+    background-repeat: repeat-x;
+  }
+  .ticks {
+    background-image: repeating-linear-gradient(90deg, rgba(7,11,20,.16) 0 2px, transparent 2px 6px);
+  }
+</style>
+</head>
+<body class="min-h-full bg-ink-950 text-slate-100 grid place-items-center font-sans px-4">
+  <div class="w-full max-w-sm">
+
+    <!-- access-pass card: the whole product is time-bound access badges,
+         so the login itself is styled like one -->
+    <div class="relative rounded-[28px] bg-pass-50 text-ink-950 shadow-2xl overflow-hidden">
+
+      <!-- lanyard punch hole -->
+      <div class="absolute left-1/2 -translate-x-1/2 top-4 w-10 h-3 rounded-full bg-ink-950/90"></div>
+
+      <!-- badge header -->
+      <div class="pt-11 pb-6 px-8 text-center">
+        <div class="flex items-center justify-center gap-1.5 mb-2">
+          <span class="w-1.5 h-1.5 rounded-full bg-live-500"></span>
+          <span class="text-[10px] tracking-[0.25em] uppercase text-ink-950/45">Access Pass</span>
+        </div>
+        <div class="font-serif text-[26px] leading-none font-semibold tracking-tight">Drive Manager</div>
+        <div class="text-xs text-ink-950/50 mt-2">Sign in to manage access &amp; revenue</div>
+      </div>
+
+      <!-- tear-off perforation -->
+      <div class="h-4 perforation"></div>
+
+      <!-- form -->
+      <div class="px-8 pt-7 pb-2 bg-white">
+        {% if error %}
+          <div class="mb-4 px-3 py-2 rounded-lg bg-rose-50 text-rose-700 text-sm border border-rose-200">{{ error }}</div>
+        {% endif %}
+        <form method="post" action="/login" class="space-y-4">
+          <div>
+            <label class="text-[11px] font-medium tracking-wide uppercase text-ink-950/40">Email</label>
+            <input name="email" type="email" required autofocus
+                   class="w-full mt-1 px-3 py-2.5 rounded-lg bg-ink-950/5 border border-ink-950/10 focus:border-brass-500 focus:outline-none focus:ring-2 focus:ring-brass-500/20 transition">
+          </div>
+          <div>
+            <label class="text-[11px] font-medium tracking-wide uppercase text-ink-950/40">Password</label>
+            <input name="password" type="password" required
+                   class="w-full mt-1 px-3 py-2.5 rounded-lg bg-ink-950/5 border border-ink-950/10 focus:border-brass-500 focus:outline-none focus:ring-2 focus:ring-brass-500/20 transition">
+          </div>
+          <button class="w-full py-3 rounded-lg bg-ink-950 text-pass-50 hover:bg-ink-800 transition font-semibold tracking-wide">
+            Sign in
+          </button>
+        </form>
+      </div>
+
+      <!-- barcode-style footer -->
+      <div class="px-8 pb-7 pt-3 bg-white">
+        <div class="h-4 ticks"></div>
+        <div class="mt-3 text-center text-[10px] text-ink-950/35">Access is granted individually by your administrator</div>
+      </div>
+    </div>
+
+    <p class="mt-6 text-center text-xs text-slate-500">Drive Access &amp; Revenue Manager</p>
+  </div>
+</body>
+</html>

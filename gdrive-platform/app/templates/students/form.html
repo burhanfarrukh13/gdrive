@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if student else 'New' }} student — Drive Manager{% endblock %}
+{% block heading %}{{ 'Edit student' if student else 'New student' }}{% endblock %}
+{% block content %}
+<form method="post"
+      action="{{ '/students/' ~ student.id ~ '/edit' if student else '/students/new' }}"
+      class="max-w-2xl space-y-4 rounded-2xl border border-ink-700/60 bg-ink-900 p-6">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <label class="text-xs text-slate-400">Full name</label>
+      <input name="full_name" required value="{{ student.full_name if student else '' }}"
+             class="w-full mt-1 px-3 py-2 rounded-lg bg-ink-800 border border-ink-700 focus:border-brand-500 focus:outline-none">
+    </div>
+    <div>
+      <label class="text-xs text-slate-400">Phone</label>
+      <input name="phone" value="{{ student.phone if student else '' }}"
+             class="w-full mt-1 px-3 py-2 rounded-lg bg-ink-800 border border-ink-700 focus:border-brand-500 focus:outline-none">
+    </div>
+    <div>
+      <label class="text-xs text-slate-400">Email</label>
+      <input name="email" type="email" required value="{{ student.email if student else '' }}"
+             class="w-full mt-1 px-3 py-2 rounded-lg bg-ink-800 border border-ink-700 focus:border-brand-500 focus:outline-none">
+    </div>
+    <div>
+      <label class="text-xs text-slate-400">Google account (for Drive permission)</label>
+      <input name="google_email" type="email" required value="{{ student.google_email if student else '' }}"
+             class="w-full mt-1 px-3 py-2 rounded-lg bg-ink-800 border border-ink-700 focus:border-brand-500 focus:outline-none">
+    </div>
+    <div class="md:col-span-2">
+      <label class="text-xs text-slate-400">Course / Batch</label>
+      <input name="course_or_batch" value="{{ student.course_or_batch if student else '' }}"
+             class="w-full mt-1 px-3 py-2 rounded-lg bg-ink-800 border border-ink-700 focus:border-brand-500 focus:outline-none">
+    </div>
+    <div class="md:col-span-2">
+      <label class="text-xs text-slate-400">Notes</label>
+      <textarea name="notes" rows="3"
+                class="w-full mt-1 px-3 py-2 rounded-lg bg-ink-800 border border-ink-700 focus:border-brand-500 focus:outline-none">{{ student.notes if student else '' }}</textarea>
+    </div>
+    {% if student %}
+    <div class="md:col-span-2 flex items-center gap-2">
+      <input id="is_active" name="is_active" type="checkbox" value="1" {% if student.is_active %}checked{% endif %} class="rounded">
+      <label for="is_active" class="text-sm text-slate-300">Active</label>
+    </div>
+    {% endif %}
+  </div>
+  <div class="flex justify-end gap-2 pt-2">
+    <a href="/students" class="px-4 py-2 rounded-lg bg-ink-800 text-slate-300">Cancel</a>
+    <button class="px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-400 text-white font-medium">Save</button>
+  </div>
+</form>
+{% endblock %}

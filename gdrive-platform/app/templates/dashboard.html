@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Drive Manager{% endblock %}
+{% block heading %}Dashboard{% endblock %}
+{% block heading_extra %}
+<div class="flex items-center gap-2 ml-4">
+  <a href="/students" class="text-xs px-3 py-1.5 rounded-lg bg-ink-800 hover:bg-ink-700 text-slate-200 transition">+ Student</a>
+  <a href="/folders" class="text-xs px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-400 text-white transition">+ Drive Folder</a>
+  <a href="/grants" class="text-xs px-3 py-1.5 rounded-lg bg-ink-800 hover:bg-ink-700 text-slate-200 transition">+ Grant Access</a>
+</div>
+{% endblock %}
+{% block content %}
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+  {% macro tile(label, value, sub, gradient) %}
+  <div class="relative overflow-hidden rounded-2xl border border-ink-700/60 bg-ink-900 p-5">
+    <div class="absolute inset-0 opacity-20 bg-gradient-to-br {{ gradient }}"></div>
+    <div class="relative">
+      <div class="text-xs uppercase tracking-wider text-slate-400">{{ label }}</div>
+      <div class="text-3xl font-semibold mt-1">{{ value }}</div>
+      {% if sub %}<div class="text-xs text-slate-500 mt-1">{{ sub }}</div>{% endif %}
+    </div>
+  </div>
+  {% endmacro %}
+  {{ tile('Active Students', tiles.students, 'Currently enrolled', 'from-brand-500 to-fuchsia-500') }}
+  {{ tile('Drive Folders', tiles.folders, 'Tracked & active', 'from-emerald-500 to-teal-500') }}
+  {{ tile('Active Grants', tiles.active_grants, tiles.expiring_soon ~ ' expiring in 7 days', 'from-amber-500 to-orange-500') }}
+  {{ tile('Revenue Received', tiles.received, 'All time', 'from-sky-500 to-indigo-500') }}
+  {{ tile('Receivables', tiles.pending, 'Pending collection', 'from-rose-500 to-pink-500') }}
+  {{ tile('Paid Out', tiles.paid_out, 'Distributed to team', 'from-violet-500 to-purple-500') }}
+  {{ tile('Pending Payouts', tiles.pending_payouts, 'Awaiting disbursement', 'from-yellow-500 to-amber-500') }}
+  {{ tile('Expiring Soon', tiles.expiring_soon, 'In next 7 days', 'from-cyan-500 to-blue-500') }}
+  {% if can(user.role, 'fees.view') %}
+  {{ tile('Fees Outstanding', tiles.fees_outstanding, tiles.fees_pending_count ~ ' pending grants', 'from-orange-500 to-red-500') }}
+  {{ tile('Fees Paid', tiles.fees_paid, 'All time, recorded', 'from-teal-500 to-emerald-500') }}
+  {% endif %}
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-6">
+  <div class="lg:col-span-2 rounded-2xl border border-ink-700/60 bg-ink-900 p-5">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="font-semibold">Revenue — last 14 days</h3>
+      <span class="text-xs text-slate-500">Received amounts</span>
+    </div>
+    <canvas id="revTrend" height="120"></canvas>
+  </div>
+  <div class="rounded-2xl border border-ink-700/60 bg-ink-900 p-5">
+    <h3 class="font-semibold mb-3">Top receivables</h3>
+    <canvas id="recvChart" height="200"></canvas>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
+  <div class="rounded-2xl border border-ink-700/60 bg-ink-900 p-5">
+    <h3 class="font-semibold mb-3">Team pending balances</h3>
+    <canvas id="balChart" height="200"></canvas>
+  </div>
+  <div class="rounded-2xl border border-ink-700/60 bg-ink-900 p-5">
+    <h3 class="font-semibold mb-3">Expiring in next 7 days</h3>
+    <div class="divide-y divide-ink-700/50">
+      {% for g in expiring %}
+      <div class="py-2 flex items-center justify-between text-sm">
+        <div>
+          <div class="font-medium">{{ g.student.full_name }}</div>
+          <div class="text-xs text-slate-500">{{ g.folder.label }}</div>
+        </div>
+        <div class="text-right">
+          <div class="text-amber-300">{{ g.expires_at.strftime('%Y-%m-%d') }}</div>
+          <div class="text-xs text-slate-500">expires</div>
+        </div>
+      </div>
+      {% else %}
+      <div class="text-slate-500 text-sm py-4 text-center">Nothing expiring soon 🎉</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const grid = { color: 'rgba(148,163,184,.12)' };
+const tickColor = '#94a3b8';
+Chart.defaults.color = tickColor;
+Chart.defaults.borderColor = grid.color;
+
+new Chart(document.getElementById('revTrend'), {
+  type: 'line',
+  data: {
+    labels: {{ trend_labels|tojson }},
+    datasets: [{
+      label: 'Revenue',
+      data: {{ trend_values|tojson }},
+      borderColor: '#818cf8',
+      backgroundColor: 'rgba(129,140,248,.15)',
+      tension: .35, fill: true, pointRadius: 3,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid, ticks: { color: tickColor } },
+      y: { grid, ticks: { color: tickColor }, beginAtZero: true },
+    }
+  }
+});
+new Chart(document.getElementById('recvChart'), {
+  type: 'doughnut',
+  data: {
+    labels: {{ recv_labels|tojson }},
+    datasets: [{ data: {{ recv_values|tojson }},
+      backgroundColor: ['#818cf8','#f472b6','#34d399','#fbbf24','#22d3ee'] }]
+  },
+  options: { plugins: { legend: { position: 'bottom' } } }
+});
+new Chart(document.getElementById('balChart'), {
+  type: 'bar',
+  data: {
+    labels: {{ bal_labels|tojson }},
+    datasets: [{ data: {{ bal_values|tojson }},
+      backgroundColor: 'rgba(129,140,248,.6)', borderRadius: 6 }]
+  },
+  options: {
+    plugins: { legend: { display: false } },
+    scales: { x: { grid: { display: false } }, y: { grid, beginAtZero: true } }
+  }
+});
+</script>
+{% endblock %}

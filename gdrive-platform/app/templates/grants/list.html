@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Access Grants — Drive Manager{% endblock %}
+{% block heading %}Access Grants{% endblock %}
+{% block content %}
+{% if not drive_ready %}
+<div class="mb-4 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-sm">
+  Drive API not connected. See <code>GOOGLE_SETUP.md</code>.
+</div>
+{% endif %}
+
+<form method="get" class="mb-4 flex flex-wrap gap-2 items-end">
+  <div>
+    <label class="text-xs text-slate-400">Status</label>
+    <select name="status_filter" class="px-3 py-2 rounded-lg bg-ink-800 border border-ink-700">
+      {% for opt, lbl in [('active','Active'),('expired','Expired'),('revoked','Revoked'),('all','All')] %}
+      <option value="{{ opt }}" {% if status_filter == opt %}selected{% endif %}>{{ lbl }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label class="text-xs text-slate-400">Student</label>
+    <select name="student_id" class="px-3 py-2 rounded-lg bg-ink-800 border border-ink-700">
+      <option value="">All</option>
+      {% for s in students %}
+      <option value="{{ s.id }}" {% if student_id == s.id %}selected{% endif %}>{{ s.full_name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <button class="px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-400 text-white">Filter</button>
+</form>
+
+<div class="rounded-2xl border border-ink-700/60 bg-ink-900 overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-ink-800 text-slate-400 text-xs uppercase">
+      <tr>
+        <th class="text-left px-4 py-3">Student</th>
+        <th class="text-left px-4 py-3">Folder</th>
+        <th class="text-left px-4 py-3">Granted</th>
+        <th class="text-left px-4 py-3">Expires</th>
+        <th class="text-left px-4 py-3">Price</th>
+        <th class="text-left px-4 py-3">Fee</th>
+        <th class="text-left px-4 py-3">Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-ink-700/40">
+      {% for g in grants %}
+      <tr>
+        <td class="px-4 py-3"><a href="/students/{{ g.student.id }}" class="hover:underline">{{ g.student.full_name }}</a></td>
+        <td class="px-4 py-3">{{ g.folder.label }}</td>
+        <td class="px-4 py-3 text-slate-400">{{ g.granted_at.strftime('%Y-%m-%d') }}</td>
+        <td class="px-4 py-3 text-slate-400">{{ g.expires_at.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td class="px-4 py-3 font-mono">
+          {% if g.price_amount and g.price_amount > 0 %}{{ g.price_amount|round(2) }} {{ g.price_currency or '' }}
+          {% else %}<span class="text-slate-500">—</span>{% endif %}
+        </td>
+        <td class="px-4 py-3">
+          {% if g.fee_status %}
+            {% if g.fee_status.value == 'paid' %}<span class="px-2 py-0.5 rounded-full text-xs bg-emerald-500/15 text-emerald-300">Paid</span>
+            {% elif g.fee_status.value == 'waived' %}<span class="px-2 py-0.5 rounded-full text-xs bg-slate-500/15 text-slate-300">Waived</span>
+            {% else %}<span class="px-2 py-0.5 rounded-full text-xs bg-amber-500/15 text-amber-300">Pending</span>{% endif %}
+          {% else %}<span class="text-slate-500">—</span>{% endif %}
+        </td>
+        <td class="px-4 py-3">
+          {% if g.status.value == 'active' %}<span class="px-2 py-0.5 rounded-full text-xs bg-emerald-500/15 text-emerald-300">Active</span>
+          {% elif g.status.value == 'expired' %}<span class="px-2 py-0.5 rounded-full text-xs bg-amber-500/15 text-amber-300">Expired</span>
+          {% else %}<span class="px-2 py-0.5 rounded-full text-xs bg-rose-500/15 text-rose-300">Revoked</span>{% endif %}
+        </td>
+        <td class="px-4 py-3 text-right">
+          {% if g.status.value == 'active' and can(user.role, 'grants.revoke') %}
+          <form method="post" action="/grants/{{ g.id }}/revoke" class="inline">
+            <button class="text-rose-400 hover:underline text-xs">Revoke</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="8" class="text-slate-500 text-center py-10">No grants match.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

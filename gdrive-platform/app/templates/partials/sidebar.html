@@ -1,0 +1,41 @@
+<aside class="w-60 shrink-0 border-r border-ink-700/60 bg-gradient-to-b from-ink-900 to-ink-950">
+  <div class="px-5 py-5 border-b border-ink-700/60">
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-fuchsia-500 grid place-items-center font-bold">D</div>
+      <div>
+        <div class="text-sm font-semibold tracking-wide">Drive Manager</div>
+        <div class="text-xs text-slate-500">Access · Revenue · Team</div>
+      </div>
+    </div>
+  </div>
+  <nav class="p-3 space-y-1 text-sm">
+    {% set p = request.url.path %}
+    {% macro item(href, label, icon, perm) %}
+      {% if can(user.role, perm) %}
+      <a href="{{ href }}"
+         class="flex items-center gap-3 px-3 py-2 rounded-lg transition
+                {% if p == href or p.startswith(href + '/') %} bg-ink-700 text-white shadow-glow{% else %} text-slate-400 hover:text-white hover:bg-ink-800/70{% endif %}">
+        <span class="w-5 text-center">{{ icon|safe }}</span>
+        <span>{{ label }}</span>
+      </a>
+      {% endif %}
+    {% endmacro %}
+    {{ item('/dashboard', 'Dashboard', '◉', 'dashboard.view') }}
+    {{ item('/students', 'Students', '👤', 'students.view') }}
+    {{ item('/folders', 'Drive Folders', '📁', 'folders.view') }}
+    {{ item('/grants', 'Access Grants', '🔐', 'grants.view') }}
+    {{ item('/fees', 'Sales & Revenue', '🧾', 'fees.view') }}
+    {{ item('/payouts', 'Payouts', '💸', 'payouts.view') }}
+    {{ item('/team', 'Team', '🧑‍🤝‍🧑', 'team.view') }}
+    {{ item('/audit', 'Audit Log', '📜', 'audit.view') }}
+  </nav>
+  <div class="px-4 py-4 text-xs text-slate-500 border-t border-ink-700/60">
+    <div>Drive API:
+      {% if sidebar_drive_ready() %}
+        <span class="text-emerald-400">Connected</span>
+      {% else %}
+        <span class="text-amber-400">Setup needed</span>
+      {% endif %}
+    </div>
+  </div>
+</aside>

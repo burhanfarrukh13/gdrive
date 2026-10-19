@@ -1,0 +1,17 @@
+@echo off
+title Drive Manager - Launcher
+cd /d "%~dp0"
+
+echo Starting Drive Manager server...
+start "Drive Manager Server" cmd /k "python run.py"
+
+echo Waiting for server to come up...
+:waitloop
+timeout /t 1 /nobreak >nul
+powershell -Command "try { $r = Invoke-WebRequest -Uri http://localhost:8000/health -UseBasicParsing -TimeoutSec 1; if ($r.StatusCode -eq 200) { exit 0 } else { exit 1 } } catch { exit 1 }"
+if errorlevel 1 goto waitloop
+
+echo Server is up. Opening in Chrome...
+start "" "C:\Program Files\Google\Chrome\Application\chrome.exe" "http://localhost:8000"
+
+exit

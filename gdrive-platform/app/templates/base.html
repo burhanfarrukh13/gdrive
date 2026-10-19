@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}Drive Manager{% endblock %}</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/htmx.org@1.9.12"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="/static/css/app.css">
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        ink: { 950:'#070b14', 900:'#0b1220', 800:'#111a2e', 700:'#1a2540', 600:'#243154' },
+        brand: { 500:'#6366f1', 400:'#818cf8', 300:'#a5b4fc' },
+      },
+      boxShadow: { 'glow': '0 0 0 1px rgba(99,102,241,.25), 0 10px 40px -10px rgba(99,102,241,.5)' },
+    }
+  }
+}
+</script>
+</head>
+<body class="h-full bg-ink-950 text-slate-100 antialiased">
+<div class="flex min-h-full">
+  {% include "partials/sidebar.html" %}
+  <main class="flex-1 min-w-0">
+    <header class="sticky top-0 z-30 backdrop-blur bg-ink-950/70 border-b border-ink-700/60">
+      <div class="flex items-center justify-between px-6 h-16">
+        <div class="flex items-center gap-3">
+          <h1 class="text-base font-semibold tracking-wide">{% block heading %}Dashboard{% endblock %}</h1>
+          {% block heading_extra %}{% endblock %}
+        </div>
+        <div class="flex items-center gap-3 text-sm text-slate-400">
+          <span>{{ user.full_name }}</span>
+          <span class="px-2 py-0.5 rounded-full bg-ink-700 text-brand-300 text-xs uppercase tracking-wider">{{ user.role.value }}</span>
+          <form method="post" action="/logout">
+            <button class="text-slate-400 hover:text-white transition">Logout</button>
+          </form>
+        </div>
+      </div>
+    </header>
+    <div class="p-6">
+      {% set _flash = pop_flash(request) %}
+      {% if _flash %}
+      <div x-data="{ open: true }" x-show="open" x-transition
+           class="mb-4 px-4 py-3 rounded-xl border text-sm flex items-start justify-between gap-3
+                  {% if _flash.level == 'error' %}bg-rose-500/10 border-rose-500/30 text-rose-200
+                  {% elif _flash.level == 'success' %}bg-emerald-500/10 border-emerald-500/30 text-emerald-200
+                  {% elif _flash.level == 'warn' %}bg-amber-500/10 border-amber-500/30 text-amber-200
+                  {% else %}bg-sky-500/10 border-sky-500/30 text-sky-200{% endif %}">
+        <div>{{ _flash.msg }}</div>
+        <button onclick="this.parentElement.remove()" class="text-current opacity-60 hover:opacity-100">✕</button>
+      </div>
+      {% endif %}
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+</div>
+{% block scripts %}{% endblock %}
+</body>
+</html>

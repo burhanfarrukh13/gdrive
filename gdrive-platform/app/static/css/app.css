@@ -1,0 +1,20 @@
+/* Drive Manager — small global polish */
+
+html, body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #0b1220; }
+::-webkit-scrollbar-thumb { background: #1a2540; border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: #243154; }
+
+/* smooth focus rings */
+input:focus, select:focus, textarea:focus, button:focus {
+  box-shadow: 0 0 0 2px rgba(99,102,241,.35);
+}
+
+/* subtle entrance for cards */
+.card-pop { animation: pop .25s ease-out; }
+@keyframes pop { from { transform: translateY(4px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* table row hover */
+tbody tr { transition: background-color .15s; }

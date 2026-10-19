@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Revenue — Drive Manager{% endblock %}
+{% block heading %}Revenue{% endblock %}
+{% block heading_extra %}
+  <span class="text-xs text-slate-500">Synced from <a href="/fees" class="text-brand-400 hover:underline">Sales &amp; Fees</a></span>
+{% endblock %}
+{% block content %}
+<div class="mb-4 px-4 py-3 rounded-xl bg-sky-500/10 border border-sky-500/30 text-sky-200 text-sm">
+  Revenue and fees are the same thing. A fee on a student sale auto-creates the matching revenue row.
+  To record a new sale, open a student and click <b>Sell access</b>. Mark a fee paid to receive its revenue.
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+  <div class="rounded-2xl border border-ink-700/60 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 p-5">
+    <div class="text-xs uppercase tracking-wider text-slate-400">Total Received</div>
+    <div class="text-3xl font-semibold mt-1">{{ total_received }}</div>
+  </div>
+  <div class="rounded-2xl border border-ink-700/60 bg-gradient-to-br from-amber-500/10 to-rose-500/10 p-5">
+    <div class="text-xs uppercase tracking-wider text-slate-400">Total Receivable</div>
+    <div class="text-3xl font-semibold mt-1">{{ total_pending }}</div>
+  </div>
+</div>
+
+<form method="get" class="mb-3 flex gap-2 items-end">
+  <select name="status_filter" class="px-3 py-2 rounded-lg bg-ink-800 border border-ink-700">
+    {% for opt, lbl in [('all','All'),('pending','Pending'),('received','Received'),('cancelled','Cancelled')] %}
+    <option value="{{ opt }}" {% if status_filter == opt %}selected{% endif %}>{{ lbl }}</option>
+    {% endfor %}
+  </select>
+  <select name="student_id" class="px-3 py-2 rounded-lg bg-ink-800 border border-ink-700">
+    <option value="">All students</option>
+    {% for s in students %}
+    <option value="{{ s.id }}" {% if student_id == s.id %}selected{% endif %}>{{ s.full_name }}</option>
+    {% endfor %}
+  </select>
+  <button class="px-4 py-2 rounded-lg bg-ink-800">Filter</button>
+</form>
+
+<div class="rounded-2xl border border-ink-700/60 bg-ink-900 overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-ink-800 text-slate-400 text-xs uppercase">
+      <tr>
+        <th class="text-left px-4 py-3">Amount</th>
+        <th class="text-left px-4 py-3">Student</th>
+        <th class="text-left px-4 py-3">Source</th>
+        <th class="text-left px-4 py-3">Status</th>
+        <th class="text-left px-4 py-3">Received</th>
+        <th class="text-left px-4 py-3">Due</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-ink-700/40">
+      {% for e in events %}
+      <tr>
+        <td class="px-4 py-3 font-medium">{{ e.amount|round(2) }} {{ e.currency }}</td>
+        <td class="px-4 py-3">
+          {% if e.student %}<a href="/students/{{ e.student.id }}" class="hover:underline">{{ e.student.full_name }}</a>
+          {% else %}<span class="text-slate-500">— general —</span>{% endif %}
+        </td>
+        <td class="px-4 py-3 text-slate-400">
+          {% if e.source == 'fee' and e.notes and e.notes.startswith('grant:') %}
+            <span class="text-brand-300">Sale</span>
+          {% else %}
+            {{ e.source or '—' }}
+          {% endif %}
+        </td>
+        <td class="px-4 py-3">
+          {% if e.status.value == 'received' %}<span class="text-emerald-300">Received</span>
+          {% elif e.status.value == 'pending' %}<span class="text-amber-300">Pending</span>
+          {% else %}<span class="text-slate-400">Cancelled</span>{% endif %}
+        </td>
+        <td class="px-4 py-3 text-slate-400">{{ e.received_on or '—' }}</td>
+        <td class="px-4 py-3 text-slate-400">{{ e.due_on or '—' }}</td>
+        <td class="px-4 py-3 text-right space-x-2">
+          {% if e.status.value == 'pending' and can(user.role, 'revenue.update') %}
+          <form method="post" action="/revenue/{{ e.id }}/receive" class="inline">
+            <button class="text-emerald-400 hover:underline text-xs">Mark received</button>
+          </form>
+          {% endif %}
+          {% if e.status.value != 'cancelled' and can(user.role, 'revenue.delete') %}
+          <form method="post" action="/revenue/{{ e.id }}/cancel" class="inline">
+            <button class="text-rose-400 hover:underline text-xs">Cancel</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" class="text-slate-500 text-center py-10">No revenue events yet. Open a student and click "Sell access" to record one.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% block title %}{{ student.full_name }} — Drive Manager{% endblock %}
+{% block heading %}{{ student.full_name }}{% endblock %}
+{% block heading_extra %}
+  {% if can(user.role, 'grants.create') %}
+  <button onclick="document.getElementById('grantModal').classList.remove('hidden')"
+          class="px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-400 text-white text-sm">+ Grant access</button>
+  {% endif %}
+  {% if can(user.role, 'students.update') %}
+  <a href="/students/{{ student.id }}/edit" class="px-3 py-1.5 rounded-lg bg-ink-800 text-slate-300 text-sm">Edit</a>
+  {% endif %}
+{% endblock %}
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+  <div class="rounded-2xl border border-ink-700/60 bg-ink-900 p-5">
+    <h3 class="font-semibold mb-3">Profile</h3>
+    <dl class="text-sm space-y-2">
+      <div class="flex justify-between"><dt class="text-slate-400">Email</dt><dd>{{ student.email }}</dd></div>
+      <div class="flex justify-between"><dt class="text-slate-400">Google</dt><dd>{{ student.google_email }}</dd></div>
+      <div class="flex justify-between"><dt class="text-slate-400">Phone</dt><dd>{{ student.phone or '—' }}</dd></div>
+      <div class="flex justify-between"><dt class="text-slate-400">Batch</dt><dd>{{ student.course_or_batch or '—' }}</dd></div>
+      <div class="flex justify-between"><dt class="text-slate-400">Status</dt>
+        <dd>{% if student.is_active %}<span class="text-emerald-300">Active</span>{% else %}<span class="text-slate-400">Inactive</span>{% endif %}</dd>
+      </div>
+    </dl>
+    {% if student.notes %}
+    <div class="mt-4 pt-4 border-t border-ink-700/50 text-sm text-slate-300">
+      <div class="text-xs text-slate-500 mb-1">Notes</div>{{ student.notes }}
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="lg:col-span-2 rounded-2xl border border-ink-700/60 bg-ink-900 p-5">
+    <h3 class="font-semibold mb-3">Access grants</h3>
+    <table class="w-full text-sm">
+      <thead class="text-slate-400 text-xs uppercase">
+        <tr>
+          <th class="text-left py-2">Folder</th>
+          <th class="text-left py-2">Expires</th>
+          <th class="text-left py-2">Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-ink-700/40">
+        {% for g in grants %}
+        <tr>
+          <td class="py-2">{{ g.folder.label }}</td>
+          <td class="py-2 text-slate-400">{{ g.expires_at.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td class="py-2">
+            {% if g.status.value == 'active' %}<span class="text-emerald-300">Active</span>
+            {% elif g.status.value == 'expired' %}<span class="text-amber-300">Expired</span>
+            {% else %}<span class="text-rose-300">Revoked</span>{% endif %}
+          </td>
+          <td class="py-2 text-right">
+            {% if g.status.value == 'active' and can(user.role, 'grants.revoke') %}
+            <form method="post" action="/grants/{{ g.id }}/revoke" class="inline">
+              <button class="text-rose-400 hover:underline text-xs">Revoke</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="text-slate-500 text-center py-6">No grants yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="lg:col-span-3 rounded-2xl border border-ink-700/60 bg-ink-900 p-5">
+    <h3 class="font-semibold mb-3">Revenue from this student</h3>
+    <table class="w-full text-sm">
+      <thead class="text-slate-400 text-xs uppercase">
+        <tr>
+          <th class="text-left py-2">Amount</th>
+          <th class="text-left py-2">Source</th>
+          <th class="text-left py-2">Status</th>
+          <th class="text-left py-2">Received</th>
+          <th class="text-left py-2">Due</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-ink-700/40">
+        {% for r in revenues %}
+        <tr>
+          <td class="py-2 font-medium">{{ r.amount|round(2) }} {{ r.currency }}</td>
+          <td class="py-2 text-slate-400">{{ r.source or '—' }}</td>
+          <td class="py-2">
+            {% if r.status.value == 'received' %}<span class="text-emerald-300">Received</span>
+            {% elif r.status.value == 'pending' %}<span class="text-amber-300">Pending</span>
+            {% else %}<span class="text-slate-400">Cancelled</span>{% endif %}
+          </td>
+          <td class="py-2 text-slate-400">{{ r.received_on or '—' }}</td>
+          <td class="py-2 text-slate-400">{{ r.due_on or '—' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-slate-500 text-center py-6">No revenue events yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if can(user.role, 'grants.create') %}
+<div id="grantModal" class="hidden fixed inset-0 z-50 grid place-items-center bg-black/60">
+  <div class="w-full max-w-xl rounded-2xl bg-ink-900 border border-ink-700 p-6 relative">
+    <button onclick="document.getElementById('grantModal').classList.add('hidden')"
+            class="absolute top-3 right-3 text-slate-400 hover:text-white">✕</button>
+    <h3 class="text-lg font-semibold mb-1">Sell access</h3>
+    <p class="text-sm text-slate-400 mb-4">For <b>{{ student.full_name }}</b> ({{ student.google_email }})</p>
+    <form method="post" action="/grants/new" class="space-y-4" id="grantForm">
+      <input type="hidden" name="student_id" value="{{ student.id }}">
+
+      {# --- Step 1: what are we selling? --- #}
+      <div>
+        <label class="text-xs text-slate-400">Folder (pick one per sale — if the student buys multiple folders, click "Sell access" again)</label>
+        <select name="folder_ids" id="grantFolderSelect" size="1" required
+                class="w-full mt-1 px-3 py-2 rounded-lg bg-ink-800 border border-ink-700"
+                onchange="onFolderPicked()">
+          {% for f in all_folders %}
+          <option value="{{ f.id }}"
+                  data-default-price="{{ f.default_price if f.default_price is not none else '' }}"
+                  data-default-currency="{{ f.default_currency or 'PKR' }}">
+            {{ f.label }}{% if f.default_price %} · {{ '%.0f'|format(f.default_price) }} {{ f.default_currency or 'PKR' }}{% endif %}
+          </option>
+          {% endfor %}
+        </select>
+        <p class="text-xs text-slate-500 mt-1">Set a folder's default price in the Folders page so it auto-fills here.</p>
+      </div>
+
+      {# --- Step 2: the sale itself (price is the star of the show) --- #}
+      <div class="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-3">
+        <div class="text-xs uppercase tracking-wider text-amber-300">Sale details</div>
+        <div class="grid grid-cols-3 gap-3">
+          <div class="col-span-2">
+            <label class="text-xs text-slate-400">Price <span class="text-rose-400">*</span></label>
+            <input type="number" min="0" step="0.01" name="price_amount" id="priceAmount" value="0" required
+                   class="w-full mt-1 px-3 py-2 rounded-lg bg-ink-800 border border-ink-700 text-lg font-mono">
+          </div>
+          <div>
+            <label class="text-xs text-slate-400">Currency</label>
+            <input name="price_currency" id="priceCurrency" value="PKR" maxlength="8"
+                   class="w-full mt-1 px-3 py-2 rounded-lg bg-ink-800 border border-ink-700">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-slate-400">Fee status</label>
+            <select name="fee_status" id="feeStatus" onchange="onFeeStatusChange()"
+                    class="w-full mt-1 px-3 py-2 rounded-lg bg-ink-800 border border-ink-700">
+              <option value="pending" selected>Pending</option>
+              <option value="paid">Paid</option>
+              <option value="waived">Waived (free comp)</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-400">Credited to (account / wallet name)</label>
+            <input name="fee_credit_account" id="feeCreditAccount" placeholder="e.g. Meezan — Qureshi"
+                   class="w-full mt-1 px-3 py-2 rounded-lg bg-ink-800 border border-ink-700">
+          </div>
+        </div>
+        <p class="text-xs text-slate-500" id="saleHint">Tip: the price pre-fills from the folder's default. Override per-sale if needed.</p>
+      </div>
+
+      {# --- Step 3: access details --- #}
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs text-slate-400">Expiry (days, 1–365)</label>
+          <input type="number" name="days" min="1" max="365" value="30" required
+                 class="w-full mt-1 px-3 py-2 rounded-lg bg-ink-800 border border-ink-700">
+        </div>
+        <div>
+          <label class="text-xs text-slate-400">Notes (optional)</label>
+          <input name="notes" class="w-full mt-1 px-3 py-2 rounded-lg bg-ink-800 border border-ink-700">
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-1">
+        <button type="button" onclick="document.getElementById('grantModal').classList.add('hidden')"
+                class="px-4 py-2 rounded-lg bg-ink-800 text-slate-300">Cancel</button>
+        <button class="px-5 py-2 rounded-lg bg-brand-500 hover:bg-brand-400 text-white font-medium">Sell & grant access</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function onFolderPicked() {
+  const sel = document.getElementById('grantFolderSelect');
+  const opt = sel.options[sel.selectedIndex];
+  const dp = opt.getAttribute('data-default-price');
+  const dc = opt.getAttribute('data-default-currency') || 'PKR';
+  if (dp && dp !== '') {
+    document.getElementById('priceAmount').value = dp;
+    document.getElementById('priceCurrency').value = dc;
+  }
+}
+function onFeeStatusChange() {
+  const st = document.getElementById('feeStatus').value;
+  const hint = document.getElementById('saleHint');
+  const price = document.getElementById('priceAmount');
+  if (st === 'waived') {
+    price.value = 0;
+    price.readOnly = true;
+    price.classList.add('opacity-60');
+    hint.textContent = 'Waived: price is locked at 0 (no charge recorded).';
+    hint.classList.add('text-emerald-300');
+    hint.classList.remove('text-slate-500');
+  } else {
+    price.readOnly = false;
+    price.classList.remove('opacity-60');
+    hint.textContent = 'Tip: the price pre-fills from the folder\'s default. Override per-sale if needed.';
+    hint.classList.remove('text-emerald-300');
+    hint.classList.add('text-slate-500');
+  }
+}
+// When the modal opens, prefill from the selected folder.
+document.addEventListener('DOMContentLoaded', function() {
+  const modal = document.getElementById('grantModal');
+  if (!modal) return;
+  const observer = new MutationObserver(function() {
+    if (!modal.classList.contains('hidden')) {
+      onFolderPicked();
+    }
+  });
+  observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+});
+</script>
+{% endif %}
+{% if can(user.role, 'fees.update') %}
+<script>
+function quickMarkPaid(btn, student, folder) {
+  const date = prompt('Paid on (YYYY-MM-DD, leave blank for today):', new Date().toISOString().slice(0, 10));
+  if (date === null) return false;
+  const account = prompt('Credited to (account / wallet name):', '');
+  if (account === null) return false;
+  btn.form.querySelector('input[name="paid_on"]').value = date || new Date().toISOString().slice(0, 10);
+  btn.form.querySelector('input[name="credit_account"]').value = account;
+  return true;
+}
+</script>
+{% endif %}
+{% endblock %}
